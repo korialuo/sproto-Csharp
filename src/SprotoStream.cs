@@ -17,10 +17,10 @@ namespace Sproto
 			get {return this.buffer;}
 		}
 
-		public SprotoStream () {
-			this.size = 128;
-			this.pos = 0;
-			this.buffer = new byte[this.size];
+		public SprotoStream (int initsize = 128) {
+			this.size = initsize;
+            this.pos = 0;
+            this.buffer = new byte[this.size];
 		}
 
 		private void _expand(int sz=0) {
