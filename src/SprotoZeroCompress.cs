@@ -13,6 +13,7 @@ namespace Sproto
             SprotoStream compressed = new SprotoStream();
             int idx = 0;
             int i = 0;
+            len = len == 0 ? data.Length : len;
             while (idx < len)
             {
                 byte mapz = 0;
@@ -44,6 +45,7 @@ namespace Sproto
         {
             SprotoStream origin = new SprotoStream();
             int idx = 0;
+            len = len == 0 ? data.Length : len;
             while (idx < len)
             {
                 int mapz = data[idx++];
