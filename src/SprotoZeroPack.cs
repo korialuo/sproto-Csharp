@@ -1,36 +1,38 @@
 ﻿using System.Linq;
 
 namespace Sproto {
-    public static class SprotoZeroCompress {
+
+    public static class SprotoZeroPack {
+
         private const int GROUP_SZ = 8;
 
-        public static byte[] Compress(byte[] data, int len = 0) {
-            SprotoStream compressed = new SprotoStream();
+        public static byte[] Pack(byte[] data, int len = 0) {
+            SprotoStream packed = new SprotoStream();
             int idx = 0;
             int i = 0;
             len = len == 0 ? data.Length : len;
             while (idx < len) {
                 byte mapz = 0;
                 SprotoStream group = new SprotoStream(GROUP_SZ);
-                for (i = 0; i < SprotoZeroCompress.GROUP_SZ && idx < len; ++i) {
+                for (i = 0; i < GROUP_SZ && idx < len; ++i) {
                     if (data[idx] != 0) {
                         mapz |= (byte)((1 << i) & 0xff);
                         group.Write(data, idx, 1);
                     }
                     ++idx;
                 }
-                compressed.WriteByte(mapz);
-                compressed.Write(group.Buffer, 0, group.Position);
+                packed.WriteByte(mapz);
+                packed.Write(group.Buffer, 0, group.Position);
             }
             // If it is an unsaturated group, then fill a byte of free size.
-            if (i < SprotoZeroCompress.GROUP_SZ) {
+            if (i < GROUP_SZ) {
                 byte fill = (byte)(GROUP_SZ - i);
-                compressed.WriteByte(fill);
+                packed.WriteByte(fill);
             }
-            return compressed.Buffer.Take<byte>(compressed.Position).ToArray();
+            return packed.Buffer.Take<byte>(packed.Position).ToArray();
         }
 
-        public static byte[] Decompress(byte[] data, int len = 0) {
+        public static byte[] Unpack(byte[] data, int len = 0) {
             SprotoStream origin = new SprotoStream();
             int idx = 0;
             len = len == 0 ? data.Length : len;
@@ -44,7 +46,7 @@ namespace Sproto {
                     }
                 }
                 // To judge whether it is a unsaturated group.
-                if (idx == len - 1 && data[idx] < SprotoZeroCompress.GROUP_SZ) {
+                if (idx == len - 1 && data[idx] < GROUP_SZ) {
                     fill = data[idx++];
                 }
                 origin.Write(group.Buffer, 0, GROUP_SZ - fill);
