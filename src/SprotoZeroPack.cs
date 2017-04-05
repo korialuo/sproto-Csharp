@@ -24,10 +24,10 @@ namespace Sproto {
                 packed.WriteByte(mapz);
                 packed.Write(group.Buffer, 0, group.Position);
             }
-            // If it is an unsaturated group, then fill a byte of free size.
+            // If it is an unsaturated group, then fill a byte of padding.
             if (i < GROUP_SZ) {
-                byte fill = (byte)(GROUP_SZ - i);
-                packed.WriteByte(fill);
+                byte padding = (byte)(GROUP_SZ - i);
+                packed.WriteByte(padding);
             }
             return packed.Buffer.Take<byte>(packed.Position).ToArray();
         }
@@ -39,7 +39,7 @@ namespace Sproto {
             while (idx < len) {
                 int mapz = data[idx++];
                 SprotoStream group = new SprotoStream(GROUP_SZ);
-                byte fill = 0;
+                byte padding = 0;
                 for (int i = 0; i < GROUP_SZ && idx < len; ++i) {
                     if ((mapz & ((1 << i) & 0xff)) != 0) {
                         group[i] = data[idx++];
@@ -47,9 +47,9 @@ namespace Sproto {
                 }
                 // To judge whether it is a unsaturated group.
                 if (idx == len - 1 && data[idx] < GROUP_SZ) {
-                    fill = data[idx++];
+                    padding = data[idx++];
                 }
-                origin.Write(group.Buffer, 0, GROUP_SZ - fill);
+                origin.Write(group.Buffer, 0, GROUP_SZ - padding);
             }
             return origin.Buffer.Take<byte>(origin.Position).ToArray();
         }
