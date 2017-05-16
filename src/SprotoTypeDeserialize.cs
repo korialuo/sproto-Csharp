@@ -108,6 +108,24 @@ namespace Sproto
 		}
 
 
+		public double read_decimal(double floor) {
+			Int64 v = read_integer ();
+			return  v / floor;
+		}
+
+		public List<double> read_decimal_list(double floor) {
+			List<Int64> l = read_integer_list ();
+			if (l != null) {
+				List<double> ret = new List<double> ();
+				foreach (Int64 v in l) {
+					ret.Add (v / floor);
+				}
+				return ret;
+			}
+			return null;
+		}
+
+
 		public Int64 read_integer() {
 			if (this.value >= 0) {
 				return (Int64)(this.value);
@@ -128,6 +146,7 @@ namespace Sproto
 
 			return 0;
 		}
+
 
 		public List<Int64> read_integer_list() {
 			List<Int64> integer_list = null;
@@ -193,11 +212,40 @@ namespace Sproto
 			return boolean_list;
 		}
 
-
-		public string read_string() {
+		public byte[] read_binary() {
 			UInt32 sz = this.read_dword ();
 			byte[] buffer = new byte[sz];
 			this.reader.Read (buffer, 0, buffer.Length);
+			return buffer;
+		}
+
+		public List<byte[]> read_binary_list() {
+			UInt32 sz = this.read_array_size ();
+
+			List<byte[]> bytes_list = new List<byte[]> ();
+			for (UInt32 i = 0; sz > 0; i++) {
+				if (sz < SprotoTypeSize.sizeof_length) {
+					SprotoTypeSize.error ("error array size.");
+				}
+
+				UInt32 hsz = this.read_dword ();
+				sz -= (UInt32)SprotoTypeSize.sizeof_length;
+
+				if (hsz > sz) {
+					SprotoTypeSize.error ("error array object.");
+				}
+
+				byte[] buffer = new byte[hsz];
+				this.reader.Read (buffer, 0, buffer.Length);
+
+				bytes_list.Add (buffer);
+				sz -= hsz;
+			}
+			return bytes_list;
+		}
+
+		public string read_string() {
+			byte[] buffer = this.read_binary ();
 			return System.Text.Encoding.UTF8.GetString (buffer);
 		}
 

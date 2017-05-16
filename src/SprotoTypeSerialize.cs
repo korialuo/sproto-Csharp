@@ -99,12 +99,16 @@ namespace Sproto
 			return SprotoTypeSize.sizeof_length + sizeof(UInt64);
 		}
 
-		private int encode_string(string str){
-			byte[] s = System.Text.Encoding.UTF8.GetBytes (str);
+		private int encode_bytes(byte[] s) {
 			this.fill_size (s.Length);
 			this.data.Write (s, 0, s.Length);
 
 			return SprotoTypeSize.sizeof_length + s.Length;
+		}
+
+		private int encode_string(string str){
+			byte[] s = System.Text.Encoding.UTF8.GetBytes (str);
+			return encode_bytes (s);
 		}
 
 			
@@ -132,6 +136,23 @@ namespace Sproto
 
 
 		// API
+		public void write_decimal(double d, double floor, int tag) {
+			Int64 v = (Int64)(d * floor + 0.5);
+			write_integer (v, tag);
+		}
+
+		public void write_decimal(List<double> d_list, double floor, int tag) {
+			if (d_list == null || d_list.Count <= 0)
+				return;
+			
+			List<Int64> integer_list = new List<Int64> ();
+			foreach (double v in d_list) {
+				integer_list.Add ((Int64)(v * floor + 0.5));
+			}
+			write_integer (integer_list, tag);
+
+		}
+
 		public void write_integer(Int64 integer, int tag) {
 			Int64 vh = integer >> 31;
 			int sz = (vh == 0 || vh == -1)?(sizeof(UInt32)):(sizeof(UInt64));
@@ -224,6 +245,30 @@ namespace Sproto
 			for (int i = 0; i < b_list.Count; i++) {
 				byte v = (byte)((b_list [i])?(1):(0));
 				this.data.WriteByte (v);
+			}
+
+			this.write_tag (tag, 0);
+		}
+
+		public void write_binary(byte[] bytes, int tag) {
+			this.encode_bytes (bytes);
+			this.write_tag (tag, 0);
+		}
+
+		public void write_binary(List<byte[]> bytes_list, int tag) {
+			if (bytes_list == null || bytes_list.Count <= 0)
+				return;
+
+			// write size length
+			int sz = 0;
+			foreach (byte[] v in bytes_list) {
+				sz += SprotoTypeSize.sizeof_length + v.Length;
+			}
+			this.fill_size (sz);
+
+			// write bytes
+			foreach (byte[] v in bytes_list) {
+				this.encode_bytes (v);
 			}
 
 			this.write_tag (tag, 0);
